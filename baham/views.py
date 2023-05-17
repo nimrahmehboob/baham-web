@@ -1,9 +1,14 @@
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.template import loader
 from django.urls import reverse
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django.shortcuts import redirect
+
 
 from baham.enum_types import VehicleType
 from baham.models import VehicleModel
+from .models import Vehicle
 
 
 # Create your views here.
@@ -54,3 +59,23 @@ def save_vehicle(request):
     vehicleModel = VehicleModel(vendor=_vendor, model=_model, type=_type, capacity=_capacity)
     vehicleModel.save()
     return HttpResponseRedirect(reverse('vehicles'))
+
+def vehicle_void(request, vehicle_id):
+    vehicle = get_object_or_404(VehicleModel, pk=vehicle_id)
+    print("inside")
+    if request.method == 'POST':
+        void_reason = request.POST.get('void_reason')
+        vehicle.voided = True
+        vehicle.date_voided = timezone.now()
+        vehicle.void_reason = void_reason
+        vehicle.save()
+    return redirect('vehicles')
+
+
+def vehicle_unvoid(request, vehicle_id):
+    vehicle = get_object_or_404(VehicleModel, pk=vehicle_id)
+    vehicle.voided = False
+    vehicle.date_voided = None
+    vehicle.void_reason = None
+    vehicle.save()
+    return redirect('vehicles')
